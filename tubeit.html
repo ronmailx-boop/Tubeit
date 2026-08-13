@@ -63,6 +63,7 @@
   }
   .error { color: #f66; }
 </style>
+<script src="https://www.youtube.com/iframe_api"></script>
 </head>
 <body>
 
@@ -76,7 +77,7 @@
 <div class="status" id="status"></div>
 
 <div class="wrap" id="playerWrap">
-  <iframe id="player" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title="player"></iframe>
+  <div id="player"></div>
 </div>
 
 <script>
@@ -99,6 +100,14 @@ function extractVideoId(url) {
   return null;
 }
 
+let ytPlayer = null;
+let apiReady = false;
+let pendingVideoId = null;
+let captionRetryCount = 0;
+let captionRetryTimer = null;
+const MAX_CAPTION_RETRIES = 4;
+const CAPTION_RETRY_BASE_DELAY = 600; // ms, exponential backoff
+
 function loadVideo() {
   const input = document.getElementById('urlInput').value;
   const status = document.getElementById('status');
@@ -114,10 +123,71 @@ function loadVideo() {
 
   status.textContent = 'טוען מזהה סרטון: ' + id;
   status.className = 'status';
-
-  const iframe = document.getElementById('player');
-  iframe.src = 'https://www.youtube.com/embed/' + id + '?cc_load_policy=1&cc_lang_pref=he';
   wrap.classList.add('active');
+
+  if (!apiReady) {
+    pendingVideoId = id;
+    return;
+  }
+  requestVideo(id);
+}
+
+function requestVideo(id) {
+  resetCaptionRetries();
+  if (ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
+    ytPlayer.loadVideoById(id);
+    applyHebrewCaptions(ytPlayer);
+    return;
+  }
+  ytPlayer = new YT.Player('player', {
+    videoId: id,
+    playerVars: {
+      cc_load_policy: 1,
+      cc_lang_pref: 'he',
+      hl: 'he',
+      playsinline: 1
+    },
+    events: {
+      onReady: onPlayerReady,
+      onStateChange: onPlayerStateChange
+    }
+  });
+}
+
+function applyHebrewCaptions(player) {
+  try { player.loadModule('captions'); } catch (e) {}
+  try { player.setOption('captions', 'track', { languageCode: 'he' }); } catch (e) {}
+}
+
+function onPlayerReady(event) {
+  resetCaptionRetries();
+  applyHebrewCaptions(event.target);
+  setTimeout(function () { applyHebrewCaptions(event.target); }, 300);
+}
+
+function onPlayerStateChange(event) {
+  if (event.data !== YT.PlayerState.PLAYING) return;
+  if (captionRetryCount >= MAX_CAPTION_RETRIES) return;
+  if (captionRetryTimer) clearTimeout(captionRetryTimer);
+  const delay = CAPTION_RETRY_BASE_DELAY * Math.pow(2, captionRetryCount);
+  captionRetryTimer = setTimeout(function () {
+    applyHebrewCaptions(event.target);
+    captionRetryCount++;
+  }, delay);
+}
+
+function resetCaptionRetries() {
+  captionRetryCount = 0;
+  if (captionRetryTimer) { clearTimeout(captionRetryTimer); captionRetryTimer = null; }
+}
+
+function onYouTubeIframeAPIReady() {
+  apiReady = true;
+  if (pendingVideoId) {
+    const id = pendingVideoId;
+    pendingVideoId = null;
+    requestVideo(id);
+  }
 }
 
 // Allow Enter key to trigger load
