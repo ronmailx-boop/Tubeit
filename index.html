@@ -103,10 +103,8 @@ function extractVideoId(url) {
 let ytPlayer = null;
 let apiReady = false;
 let pendingVideoId = null;
-let captionRetryCount = 0;
-let captionRetryTimer = null;
-const MAX_CAPTION_RETRIES = 4;
-const CAPTION_RETRY_BASE_DELAY = 600; // ms, exponential backoff
+let captionEnforceInterval = null;
+const CAPTION_ENFORCE_INTERVAL_MS = 4000;
 
 function loadVideo() {
   const input = document.getElementById('urlInput').value;
@@ -133,10 +131,10 @@ function loadVideo() {
 }
 
 function requestVideo(id) {
-  resetCaptionRetries();
   if (ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
     ytPlayer.loadVideoById(id);
     applyHebrewCaptions(ytPlayer);
+    startCaptionEnforcement(ytPlayer);
     return;
   }
   ytPlayer = new YT.Player('player', {
@@ -160,25 +158,21 @@ function applyHebrewCaptions(player) {
 }
 
 function onPlayerReady(event) {
-  resetCaptionRetries();
   applyHebrewCaptions(event.target);
   setTimeout(function () { applyHebrewCaptions(event.target); }, 300);
+  startCaptionEnforcement(event.target);
 }
 
 function onPlayerStateChange(event) {
   if (event.data !== YT.PlayerState.PLAYING) return;
-  if (captionRetryCount >= MAX_CAPTION_RETRIES) return;
-  if (captionRetryTimer) clearTimeout(captionRetryTimer);
-  const delay = CAPTION_RETRY_BASE_DELAY * Math.pow(2, captionRetryCount);
-  captionRetryTimer = setTimeout(function () {
-    applyHebrewCaptions(event.target);
-    captionRetryCount++;
-  }, delay);
+  applyHebrewCaptions(event.target);
 }
 
-function resetCaptionRetries() {
-  captionRetryCount = 0;
-  if (captionRetryTimer) { clearTimeout(captionRetryTimer); captionRetryTimer = null; }
+function startCaptionEnforcement(player) {
+  if (captionEnforceInterval) clearInterval(captionEnforceInterval);
+  captionEnforceInterval = setInterval(function () {
+    applyHebrewCaptions(player);
+  }, CAPTION_ENFORCE_INTERVAL_MS);
 }
 
 function onYouTubeIframeAPIReady() {
