@@ -132,6 +132,7 @@ let apiReady = false;
 let pendingVideoId = null;
 let captionEnforceInterval = null;
 let captionFontSize = 0; // -2..5, matches #fontSizeSlider
+let captionsModuleLoaded = false;
 const CAPTION_ENFORCE_INTERVAL_MS = 4000;
 
 function loadVideo() {
@@ -159,6 +160,7 @@ function loadVideo() {
 }
 
 function requestVideo(id) {
+  captionsModuleLoaded = false;
   if (ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
     ytPlayer.loadVideoById(id);
     applyHebrewCaptions(ytPlayer);
@@ -182,7 +184,9 @@ function requestVideo(id) {
 }
 
 function applyHebrewCaptions(player) {
-  try { player.loadModule('captions'); } catch (e) {}
+  if (!captionsModuleLoaded) {
+    try { player.loadModule('captions'); captionsModuleLoaded = true; } catch (e) {}
+  }
   try { player.setOption('captions', 'track', { languageCode: 'he' }); } catch (e) {}
   try { player.setOption('captions', 'fontSize', captionFontSize); } catch (e) {}
 }
