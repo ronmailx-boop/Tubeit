@@ -62,24 +62,6 @@
     min-height: 20px;
   }
   .error { color: #f66; }
-  .fontsize-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background: #222;
-    border: 1px solid #444;
-    border-radius: 8px;
-    padding: 10px 14px;
-    margin-bottom: 16px;
-  }
-  .fontsize-row label {
-    white-space: nowrap;
-    font-size: 14px;
-  }
-  .fontsize-row input[type="range"] {
-    flex: 1;
-    accent-color: #e33;
-  }
 </style>
 <script src="https://www.youtube.com/iframe_api"></script>
 </head>
@@ -93,11 +75,6 @@
 </div>
 
 <div class="status" id="status"></div>
-
-<div class="fontsize-row" id="fontSizeRow">
-  <label for="fontSizeSlider">גודל כתובית: <span id="fontSizeLabel">רגיל</span></label>
-  <input type="range" id="fontSizeSlider" min="-2" max="5" step="1" value="0">
-</div>
 
 <div class="wrap" id="playerWrap">
   <div id="player"></div>
@@ -126,9 +103,10 @@ function extractVideoId(url) {
 let ytPlayer = null;
 let apiReady = false;
 let pendingVideoId = null;
-let captionEnforceInterval = null;
-let captionFontSize = 0; // -2..5, matches #fontSizeSlider
-const CAPTION_ENFORCE_INTERVAL_MS = 4000;
+let captionRetryCount = 0;
+let captionRetryTimer = null;
+const MAX_CAPTION_RETRIES = 4;
+const CAPTION_RETRY_BASE_DELAY = 600; // ms, exponential backoff
 
 function loadVideo() {
   const input = document.getElementById('urlInput').value;
@@ -155,10 +133,10 @@ function loadVideo() {
 }
 
 function requestVideo(id) {
+  resetCaptionRetries();
   if (ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
     ytPlayer.loadVideoById(id);
     applyHebrewCaptions(ytPlayer);
-    startCaptionEnforcement(ytPlayer);
     return;
   }
   ytPlayer = new YT.Player('player', {
@@ -171,8 +149,7 @@ function requestVideo(id) {
     },
     events: {
       onReady: onPlayerReady,
-      onStateChange: onPlayerStateChange,
-      onApiChange: onPlayerApiChange
+      onStateChange: onPlayerStateChange
     }
   });
 }
@@ -180,29 +157,28 @@ function requestVideo(id) {
 function applyHebrewCaptions(player) {
   try { player.loadModule('captions'); } catch (e) {}
   try { player.setOption('captions', 'track', { languageCode: 'he' }); } catch (e) {}
-  try { player.setOption('captions', 'fontSize', captionFontSize); } catch (e) {}
 }
 
 function onPlayerReady(event) {
+  resetCaptionRetries();
   applyHebrewCaptions(event.target);
   setTimeout(function () { applyHebrewCaptions(event.target); }, 300);
-  startCaptionEnforcement(event.target);
 }
 
 function onPlayerStateChange(event) {
   if (event.data !== YT.PlayerState.PLAYING) return;
-  applyHebrewCaptions(event.target);
+  if (captionRetryCount >= MAX_CAPTION_RETRIES) return;
+  if (captionRetryTimer) clearTimeout(captionRetryTimer);
+  const delay = CAPTION_RETRY_BASE_DELAY * Math.pow(2, captionRetryCount);
+  captionRetryTimer = setTimeout(function () {
+    applyHebrewCaptions(event.target);
+    captionRetryCount++;
+  }, delay);
 }
 
-function onPlayerApiChange(event) {
-  applyHebrewCaptions(event.target);
-}
-
-function startCaptionEnforcement(player) {
-  if (captionEnforceInterval) clearInterval(captionEnforceInterval);
-  captionEnforceInterval = setInterval(function () {
-    applyHebrewCaptions(player);
-  }, CAPTION_ENFORCE_INTERVAL_MS);
+function resetCaptionRetries() {
+  captionRetryCount = 0;
+  if (captionRetryTimer) { clearTimeout(captionRetryTimer); captionRetryTimer = null; }
 }
 
 function onYouTubeIframeAPIReady() {
@@ -217,18 +193,6 @@ function onYouTubeIframeAPIReady() {
 // Allow Enter key to trigger load
 document.getElementById('urlInput').addEventListener('keydown', function(e) {
   if (e.key === 'Enter') loadVideo();
-});
-
-const FONT_SIZE_LABELS = {
-  '-2': 'קטן מאוד', '-1': 'קטן', '0': 'רגיל', '1': 'גדול', '2': 'גדול מאוד',
-  '3': 'ענק', '4': 'ענק מאוד', '5': 'מקסימלי'
-};
-const fontSizeSlider = document.getElementById('fontSizeSlider');
-const fontSizeLabel = document.getElementById('fontSizeLabel');
-fontSizeSlider.addEventListener('input', function () {
-  captionFontSize = parseInt(fontSizeSlider.value, 10);
-  fontSizeLabel.textContent = FONT_SIZE_LABELS[fontSizeSlider.value];
-  if (ytPlayer) applyHebrewCaptions(ytPlayer);
 });
 </script>
 
