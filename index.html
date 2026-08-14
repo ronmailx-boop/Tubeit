@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tubeit - בדיקת כתוביות עברית</title>
+<title>Tubeit - פתיחת יוטיוב עם כתוביות עברית</title>
 <style>
   * { box-sizing: border-box; }
   body {
@@ -13,7 +13,13 @@
     margin: 0;
     padding: 16px;
   }
-  h2 { text-align: center; margin-bottom: 16px; }
+  h2 { text-align: center; margin-bottom: 8px; }
+  p.hint {
+    text-align: center;
+    color: #999;
+    font-size: 14px;
+    margin: 0 0 16px;
+  }
   .input-row {
     display: flex;
     gap: 8px;
@@ -37,23 +43,6 @@
     font-size: 16px;
     font-weight: bold;
   }
-  .wrap {
-    position: relative;
-    width: 100%;
-    padding-bottom: 56.25%;
-    height: 0;
-    background: #000;
-    border-radius: 8px;
-    overflow: hidden;
-    display: none;
-  }
-  .wrap.active { display: block; }
-  iframe {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    border: 0;
-  }
   .status {
     text-align: center;
     color: #999;
@@ -63,22 +52,18 @@
   }
   .error { color: #f66; }
 </style>
-<script src="https://www.youtube.com/iframe_api"></script>
 </head>
 <body>
 
-<h2>Tubeit — בדיקת כתוביות עברית</h2>
+<h2>Tubeit</h2>
+<p class="hint">הדביקו קישור יוטיוב, ו-Tubeit יפתח אותו ישירות באפליקציית יוטיוב</p>
 
 <div class="input-row">
   <input type="text" id="urlInput" placeholder="הדבק קישור יוטיוב כאן..." />
-  <button onclick="loadVideo()">טען</button>
+  <button onclick="loadVideo()">פתח ביוטיוב</button>
 </div>
 
 <div class="status" id="status"></div>
-
-<div class="wrap" id="playerWrap">
-  <div id="player"></div>
-</div>
 
 <script>
 function extractVideoId(url) {
@@ -100,94 +85,33 @@ function extractVideoId(url) {
   return null;
 }
 
-let ytPlayer = null;
-let apiReady = false;
-let pendingVideoId = null;
-let captionRetryCount = 0;
-let captionRetryTimer = null;
-const MAX_CAPTION_RETRIES = 4;
-const CAPTION_RETRY_BASE_DELAY = 600; // ms, exponential backoff
+function openInYouTube(id) {
+  const watchUrl = 'https://www.youtube.com/watch?v=' + id;
+  const isAndroid = /Android/i.test(navigator.userAgent);
+
+  if (isAndroid) {
+    location.href = 'intent://www.youtube.com/watch?v=' + id +
+      '#Intent;package=com.google.android.youtube;scheme=https;S.browser_fallback_url=' +
+      encodeURIComponent(watchUrl) + ';end;';
+  } else {
+    location.href = watchUrl;
+  }
+}
 
 function loadVideo() {
   const input = document.getElementById('urlInput').value;
   const status = document.getElementById('status');
-  const wrap = document.getElementById('playerWrap');
   const id = extractVideoId(input);
 
   if (!id) {
     status.textContent = 'לא הצלחתי לזהות מזהה סרטון מהקישור הזה. נסה להדביק את הקישור המלא.';
     status.className = 'status error';
-    wrap.classList.remove('active');
     return;
   }
 
-  status.textContent = 'טוען מזהה סרטון: ' + id;
+  status.textContent = 'פותח באפליקציית יוטיוב...';
   status.className = 'status';
-  wrap.classList.add('active');
-
-  if (!apiReady) {
-    pendingVideoId = id;
-    return;
-  }
-  requestVideo(id);
-}
-
-function requestVideo(id) {
-  resetCaptionRetries();
-  if (ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
-    ytPlayer.loadVideoById(id);
-    applyHebrewCaptions(ytPlayer);
-    return;
-  }
-  ytPlayer = new YT.Player('player', {
-    videoId: id,
-    playerVars: {
-      cc_load_policy: 1,
-      cc_lang_pref: 'he',
-      hl: 'he',
-      playsinline: 1
-    },
-    events: {
-      onReady: onPlayerReady,
-      onStateChange: onPlayerStateChange
-    }
-  });
-}
-
-function applyHebrewCaptions(player) {
-  try { player.loadModule('captions'); } catch (e) {}
-  try { player.setOption('captions', 'track', { languageCode: 'he' }); } catch (e) {}
-}
-
-function onPlayerReady(event) {
-  resetCaptionRetries();
-  applyHebrewCaptions(event.target);
-  setTimeout(function () { applyHebrewCaptions(event.target); }, 300);
-}
-
-function onPlayerStateChange(event) {
-  if (event.data !== YT.PlayerState.PLAYING) return;
-  if (captionRetryCount >= MAX_CAPTION_RETRIES) return;
-  if (captionRetryTimer) clearTimeout(captionRetryTimer);
-  const delay = CAPTION_RETRY_BASE_DELAY * Math.pow(2, captionRetryCount);
-  captionRetryTimer = setTimeout(function () {
-    applyHebrewCaptions(event.target);
-    captionRetryCount++;
-  }, delay);
-}
-
-function resetCaptionRetries() {
-  captionRetryCount = 0;
-  if (captionRetryTimer) { clearTimeout(captionRetryTimer); captionRetryTimer = null; }
-}
-
-function onYouTubeIframeAPIReady() {
-  apiReady = true;
-  if (pendingVideoId) {
-    const id = pendingVideoId;
-    pendingVideoId = null;
-    requestVideo(id);
-  }
+  openInYouTube(id);
 }
 
 // Allow Enter key to trigger load
