@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tubeit - בדיקת כתוביות עברית</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#111111">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <style>
   * { box-sizing: border-box; }
   body {
@@ -230,6 +234,19 @@ fontSizeSlider.addEventListener('input', function () {
   fontSizeLabel.textContent = FONT_SIZE_LABELS[fontSizeSlider.value];
   if (ytPlayer) applyHebrewCaptions(ytPlayer);
 });
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+
+(function handleSharedLink() {
+  const params = new URLSearchParams(location.search);
+  const shared = params.get('url') || params.get('text') || params.get('title') || '';
+  if (!shared || !extractVideoId(shared)) return;
+  document.getElementById('urlInput').value = shared.trim();
+  loadVideo();
+  history.replaceState(null, '', location.pathname);
+})();
 </script>
 
 </body>
