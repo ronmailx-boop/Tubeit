@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>וריאציה 2 — לפי קטגוריה</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    background: #111;
+    color: #eee;
+    font-family: -apple-system, Roboto, Arial, sans-serif;
+    margin: 0;
+    padding: 16px;
+  }
+  a.back {
+    display: inline-block;
+    color: #999;
+    text-decoration: none;
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+  h2 { margin: 0 0 4px; }
+  p.hint {
+    color: #999;
+    font-size: 14px;
+    margin: 0 0 16px;
+  }
+  .chips {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    margin-bottom: 20px;
+  }
+  .chip {
+    flex-shrink: 0;
+    border: 1px solid #333;
+    background: #1c1c1c;
+    color: #ccc;
+    border-radius: 999px;
+    padding: 8px 16px;
+    font-size: 13px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .chip.active {
+    background: #e33;
+    border-color: #e33;
+    color: #fff;
+    font-weight: bold;
+  }
+  .group { margin-bottom: 24px; }
+  .group-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    color: #ccc;
+    margin-bottom: 10px;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #1c1c1c;
+    border: 1px solid #2c2c2c;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+  }
+  .body { flex: 1; min-width: 0; }
+  .text {
+    font-size: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .meta { font-size: 12px; color: #888; margin-top: 2px; }
+  .actions { display: flex; gap: 6px; flex-shrink: 0; }
+  button.icon {
+    background: #2a2a2a;
+    border: none;
+    color: #eee;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  button.icon:hover { background: #333; }
+  button.icon.copy { background: #e33; }
+  button.icon.copy:hover { background: #c92e2e; }
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2a2a2a;
+    color: #eee;
+    padding: 10px 18px;
+    border-radius: 20px;
+    font-size: 14px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .toast.show { opacity: 1; }
+  .empty { color: #777; text-align: center; padding: 40px 0; }
+</style>
+</head>
+<body>
+
+<a class="back" href="../index.html">→ חזרה לאב-הטיפוס</a>
+<h2>וריאציה 2 — לפי קטגוריה</h2>
+<p class="hint">הפריטים מקובצים לפי סוג התוכן, עם אפשרות סינון. פריטים נשמרים למשך 7 ימים (נתונים לדוגמה).</p>
+
+<div class="chips" id="chips"></div>
+<div id="groups"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const TYPE_META = {
+  link:    { label: 'קישורים',   color: '#5b9dff' },
+  phone:   { label: 'טלפונים',   color: '#4dd67a' },
+  email:   { label: 'אימיילים',  color: '#ffb84d' },
+  address: { label: 'כתובות',    color: '#c792ea' },
+  note:    { label: 'טקסט',      color: '#9aa5b1' },
+  code:    { label: 'קוד',       color: '#40c4b8' }
+};
+const TYPE_ORDER = ['link', 'phone', 'email', 'address', 'code', 'note'];
+
+let ITEMS = [
+  { id: 1,  type: 'link',    text: 'https://he.wikipedia.org/wiki/בינה_מלאכותית', minutesAgo: 3 },
+  { id: 2,  type: 'note',    text: 'לזכור לקנות חלב, ביצים ולחם בדרך הביתה', minutesAgo: 40 },
+  { id: 3,  type: 'phone',   text: '052-123-4567', minutesAgo: 95 },
+  { id: 4,  type: 'email',   text: 'ron.mail@example.com', minutesAgo: 180 },
+  { id: 5,  type: 'code',    text: 'npm install --save-dev vite', minutesAgo: 260 },
+  { id: 6,  type: 'address', text: 'רחוב הרצל 42, תל אביב', minutesAgo: 500 },
+  { id: 7,  type: 'link',    text: 'https://github.com/ronmailx-boop/Tubeit', minutesAgo: 900 },
+  { id: 8,  type: 'note',    text: 'סיסמה זמנית: Tmp!2026Secure', minutesAgo: 1500 },
+  { id: 9,  type: 'phone',   text: '03-987-6543', minutesAgo: 2200 },
+  { id: 10, type: 'link',    text: 'https://www.ynet.co.il/news/article/latest', minutesAgo: 4300 },
+  { id: 11, type: 'email',   text: 'support@company.co.il', minutesAgo: 8600 },
+  { id: 12, type: 'note',    text: 'רעיון לפוסט: 5 טיפים לניהול זמן', minutesAgo: 9800 }
+];
+
+let activeFilter = 'all';
+
+function timeAgoLabel(minutesAgo) {
+  if (minutesAgo < 60) return 'לפני ' + minutesAgo + ' דקות';
+  const hours = Math.floor(minutesAgo / 60);
+  if (hours < 24) return 'לפני ' + hours + ' שעות';
+  const days = Math.floor(hours / 24);
+  if (days === 1) return 'אתמול';
+  return 'לפני ' + days + ' ימים';
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 1400);
+}
+
+function copyItem(id) {
+  const item = ITEMS.find((i) => i.id === id);
+  if (!item) return;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(item.text).then(() => showToast('הועתק ללוח'));
+  } else {
+    showToast('העתקה לא נתמכת בדפדפן זה');
+  }
+}
+
+function deleteItem(id) {
+  ITEMS = ITEMS.filter((i) => i.id !== id);
+  render();
+}
+
+function setFilter(type) {
+  activeFilter = type;
+  render();
+}
+
+function escapeHtml(s) {
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+function renderChips() {
+  const chips = document.getElementById('chips');
+  const types = ['all', ...TYPE_ORDER];
+  chips.innerHTML = types.map((type) => {
+    const label = type === 'all' ? 'הכל' : TYPE_META[type].label;
+    const active = type === activeFilter ? 'active' : '';
+    return `<button class="chip ${active}" onclick="setFilter('${type}')">${label}</button>`;
+  }).join('');
+}
+
+function render() {
+  renderChips();
+  const groupsEl = document.getElementById('groups');
+  const visibleTypes = activeFilter === 'all' ? TYPE_ORDER : [activeFilter];
+  let html = '';
+  let any = false;
+
+  visibleTypes.forEach((type) => {
+    const items = ITEMS.filter((i) => i.type === type).sort((a, b) => a.minutesAgo - b.minutesAgo);
+    if (items.length === 0) return;
+    any = true;
+    const meta = TYPE_META[type];
+    html += `
+      <div class="group">
+        <div class="group-title"><span class="dot" style="background:${meta.color}"></span>${meta.label} (${items.length})</div>
+        ${items.map((item) => `
+          <div class="item">
+            <div class="body">
+              <div class="text">${escapeHtml(item.text)}</div>
+              <div class="meta">${timeAgoLabel(item.minutesAgo)}</div>
+            </div>
+            <div class="actions">
+              <button class="icon copy" onclick="copyItem(${item.id})">העתק</button>
+              <button class="icon" onclick="deleteItem(${item.id})">מחק</button>
+            </div>
+          </div>`).join('')}
+      </div>`;
+  });
+
+  groupsEl.innerHTML = any ? html : '<div class="empty">אין פריטים בקטגוריה זו</div>';
+}
+
+render();
+</script>
+
+</body>
+</html>
