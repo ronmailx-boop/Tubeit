@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tubeit - אב-טיפוס להיסטוריית קליפבורד</title>
+<title>Tubeit - הורדת האפליקציה</title>
 <style>
   * { box-sizing: border-box; }
   body {
@@ -12,87 +12,67 @@
     font-family: -apple-system, Roboto, Arial, sans-serif;
     margin: 0;
     padding: 24px 16px;
-    max-width: 640px;
+    max-width: 480px;
     margin-inline: auto;
-  }
-  h1 { margin: 0 0 8px; text-align: center; }
-  p.hint {
     text-align: center;
+  }
+  h1 { margin: 12px 0 4px; }
+  p.hint {
     color: #999;
     font-size: 14px;
-    margin: 0 0 8px;
-    line-height: 1.5;
+    line-height: 1.6;
+    margin: 0 0 24px;
   }
-  p.note {
-    text-align: center;
-    color: #666;
-    font-size: 12px;
-    margin: 0 0 28px;
-    line-height: 1.5;
-  }
-  .cards {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-  a.card {
-    display: block;
-    background: #1c1c1c;
-    border: 1px solid #2c2c2c;
-    border-radius: 12px;
-    padding: 16px 18px;
-    text-decoration: none;
-    color: #eee;
-  }
-  a.card:hover { border-color: #e33; }
-  .card-title {
-    font-size: 16px;
-    font-weight: bold;
-    margin-bottom: 4px;
-  }
-  .card-title .num {
+  a.download-btn {
     display: inline-block;
     background: #e33;
     color: #fff;
-    border-radius: 6px;
-    padding: 1px 8px;
-    font-size: 12px;
-    margin-left: 8px;
+    text-decoration: none;
+    font-size: 17px;
+    font-weight: bold;
+    padding: 14px 28px;
+    border-radius: 10px;
+    margin-bottom: 20px;
   }
-  .card-desc {
+  .note {
+    text-align: right;
+    background: #1c1c1c;
+    border: 1px solid #2c2c2c;
+    border-radius: 10px;
+    padding: 14px 16px;
     font-size: 13px;
-    color: #999;
+    color: #aaa;
+    line-height: 1.7;
+  }
+  .note b { color: #eee; }
+  a.variations-link {
+    display: block;
+    margin-top: 20px;
+    color: #777;
+    font-size: 12px;
+    text-decoration: none;
   }
 </style>
 </head>
 <body>
 
 <h1>Tubeit</h1>
-<p class="hint">אב-טיפוס: 5 עיצובים שונים להיסטוריית קליפבורד</p>
-<p class="note">מבוסס על נתוני דוגמה בלבד — דפדפן לא יכול לעקוב אוטומטית אחרי כל דבר שמעתיקים בטלפון ברקע, לכן זהו תרגיל עיצוב וחוויית משתמש, לא חיבור אמיתי ללוח.</p>
+<p class="hint">היסטוריית קליפבורד — אפליקציית אנדרואיד אמיתית, אופליין לגמרי.<br>ההורדה אמורה להתחיל אוטומטית.</p>
 
-<div class="cards">
-  <a class="card" href="variations/v1.html">
-    <div class="card-title"><span class="num">1</span>רשימה פשוטה</div>
-    <div class="card-desc">רשימה כרונולוגית מינימלית, מהחדש לישן</div>
-  </a>
-  <a class="card" href="variations/v2.html">
-    <div class="card-title"><span class="num">2</span>לפי קטגוריה</div>
-    <div class="card-desc">קיבוץ לפי סוג תוכן (קישורים, טלפונים, אימיילים...) עם סינון</div>
-  </a>
-  <a class="card" href="variations/v3.html">
-    <div class="card-title"><span class="num">3</span>ציר זמן</div>
-    <div class="card-desc">תצוגת ציר זמן אנכי, מקובץ לפי יום</div>
-  </a>
-  <a class="card" href="variations/v4.html">
-    <div class="card-title"><span class="num">4</span>כרטיסיות</div>
-    <div class="card-desc">רשת כרטיסיות ויזואלית, כל פריט בבליטה משלו</div>
-  </a>
-  <a class="card" href="variations/v5.html">
-    <div class="card-title"><span class="num">5</span>מיקוד בחיפוש</div>
-    <div class="card-desc">שורות צפופות, חיפוש מהיר ואפשרות לנעוץ פריטים חשובים</div>
-  </a>
+<a class="download-btn" href="download/tubeit.apk" id="downloadLink">הורד את הקובץ (APK)</a>
+
+<div class="note">
+  <b>שימו לב:</b> זו לא אפליקציה מחנות Google Play, לכן בפעם הראשונה כרום יבקש לאשר "התקנת אפליקציות ממקורות לא ידועים". צריך לאשר את זה כדי להתקין.<br><br>
+  האפליקציה עצמה פועלת <b>לגמרי אופליין</b> — אין לה הרשאת אינטרנט בכלל.
 </div>
+
+<a class="variations-link" href="variations/v1.html">הצצה לוריאציות העיצוב המקוריות</a>
+
+<script>
+  // Auto-trigger the download; the visible button above is the fallback
+  // in case the browser blocks a programmatic navigation on load.
+  window.location.href = 'download/tubeit.apk';
+</script>
 
 </body>
 </html>
