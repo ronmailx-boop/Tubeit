@@ -62,6 +62,24 @@
     min-height: 20px;
   }
   .error { color: #f66; }
+  .fontsize-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #222;
+    border: 1px solid #444;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+  }
+  .fontsize-row label {
+    white-space: nowrap;
+    font-size: 14px;
+  }
+  .fontsize-row input[type="range"] {
+    flex: 1;
+    accent-color: #e33;
+  }
 </style>
 <script src="https://www.youtube.com/iframe_api"></script>
 </head>
@@ -75,6 +93,11 @@
 </div>
 
 <div class="status" id="status"></div>
+
+<div class="fontsize-row" id="fontSizeRow">
+  <label for="fontSizeSlider">גודל כתובית: <span id="fontSizeLabel">רגיל</span></label>
+  <input type="range" id="fontSizeSlider" min="-2" max="2" step="1" value="0">
+</div>
 
 <div class="wrap" id="playerWrap">
   <div id="player"></div>
@@ -105,6 +128,7 @@ let apiReady = false;
 let pendingVideoId = null;
 let captionEnforceInterval = null;
 let noCaptionsCheckCount = 0;
+let captionFontSize = 0; // -2..2, matches #fontSizeSlider
 const CAPTION_ENFORCE_INTERVAL_MS = 4000;
 const NO_CAPTIONS_THRESHOLD = 3;
 const NO_CAPTIONS_MESSAGE = 'לסרטון זה אין כתוביות זמינות ביוטיוב, ולכן לא ניתן להציג תרגום.';
@@ -160,6 +184,7 @@ function requestVideo(id) {
 function applyHebrewCaptions(player) {
   try { player.loadModule('captions'); } catch (e) {}
   try { player.setOption('captions', 'track', { languageCode: 'he' }); } catch (e) {}
+  try { player.setOption('captions', 'fontSize', captionFontSize); } catch (e) {}
 }
 
 function onPlayerReady(event) {
@@ -218,6 +243,15 @@ function onYouTubeIframeAPIReady() {
 // Allow Enter key to trigger load
 document.getElementById('urlInput').addEventListener('keydown', function(e) {
   if (e.key === 'Enter') loadVideo();
+});
+
+const FONT_SIZE_LABELS = { '-2': 'קטן מאוד', '-1': 'קטן', '0': 'רגיל', '1': 'גדול', '2': 'גדול מאוד' };
+const fontSizeSlider = document.getElementById('fontSizeSlider');
+const fontSizeLabel = document.getElementById('fontSizeLabel');
+fontSizeSlider.addEventListener('input', function () {
+  captionFontSize = parseInt(fontSizeSlider.value, 10);
+  fontSizeLabel.textContent = FONT_SIZE_LABELS[fontSizeSlider.value];
+  if (ytPlayer) applyHebrewCaptions(ytPlayer);
 });
 </script>
 
