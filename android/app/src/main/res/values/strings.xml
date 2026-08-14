@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Tubeit</string>
+    <string name="subtitle">היסטוריית קליפבורד — נבדק בכל פתיחה, נשמר 7 ימים</string>
+    <string name="empty_state">אין פריטים בהיסטוריה עדיין. העתיקו משהו ופתחו את האפליקציה שוב.</string>
+    <string name="copy">העתק</string>
+    <string name="delete">מחק</string>
+    <string name="copied_toast">הועתק ללוח</string>
+</resources>
