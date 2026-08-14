@@ -3,11 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tubeit - כתוביות עברית אוטומטיות ליוטיוב</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#111111">
-<link rel="icon" href="icons/icon-192.png">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Tubeit - בדיקת כתוביות עברית</title>
 <style>
   * { box-sizing: border-box; }
   body {
@@ -89,7 +85,7 @@
 </head>
 <body>
 
-<h2>Tubeit — כתוביות עברית אוטומטיות ליוטיוב</h2>
+<h2>Tubeit — בדיקת כתוביות עברית</h2>
 
 <div class="input-row">
   <input type="text" id="urlInput" placeholder="הדבק קישור יוטיוב כאן..." />
@@ -183,7 +179,6 @@ function requestVideo(id) {
 
 function applyHebrewCaptions(player) {
   try { player.loadModule('captions'); } catch (e) {}
-  try { player.setOption('captions', 'reload', true); } catch (e) {}
   try { player.setOption('captions', 'track', { languageCode: 'he' }); } catch (e) {}
   try { player.setOption('captions', 'fontSize', captionFontSize); } catch (e) {}
 }
@@ -235,19 +230,6 @@ fontSizeSlider.addEventListener('input', function () {
   fontSizeLabel.textContent = FONT_SIZE_LABELS[fontSizeSlider.value];
   if (ytPlayer) applyHebrewCaptions(ytPlayer);
 });
-
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js');
-}
-
-(function handleSharedLink() {
-  const params = new URLSearchParams(location.search);
-  const shared = params.get('url') || params.get('text') || params.get('title') || '';
-  if (!shared || !extractVideoId(shared)) return;
-  document.getElementById('urlInput').value = shared.trim();
-  loadVideo();
-  history.replaceState(null, '', location.pathname);
-})();
 </script>
 
 </body>
