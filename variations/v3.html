@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>וריאציה 3 — ציר זמן</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    background: #111;
+    color: #eee;
+    font-family: -apple-system, Roboto, Arial, sans-serif;
+    margin: 0;
+    padding: 16px;
+  }
+  a.back {
+    display: inline-block;
+    color: #999;
+    text-decoration: none;
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+  h2 { margin: 0 0 4px; }
+  p.hint {
+    color: #999;
+    font-size: 14px;
+    margin: 0 0 20px;
+  }
+  .day-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: #e33;
+    margin: 24px 0 12px;
+  }
+  .day-title:first-of-type { margin-top: 0; }
+  .timeline {
+    position: relative;
+    padding-right: 20px;
+    border-right: 2px solid #2c2c2c;
+  }
+  .node {
+    position: relative;
+    margin-bottom: 14px;
+  }
+  .node::before {
+    content: '';
+    position: absolute;
+    right: -25px;
+    top: 6px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--dot-color, #e33);
+    border: 2px solid #111;
+  }
+  .item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #1c1c1c;
+    border: 1px solid #2c2c2c;
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .body { flex: 1; min-width: 0; }
+  .text {
+    font-size: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .meta { font-size: 12px; color: #888; margin-top: 2px; }
+  .actions { display: flex; gap: 6px; flex-shrink: 0; }
+  button.icon {
+    background: #2a2a2a;
+    border: none;
+    color: #eee;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  button.icon:hover { background: #333; }
+  button.icon.copy { background: #e33; }
+  button.icon.copy:hover { background: #c92e2e; }
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2a2a2a;
+    color: #eee;
+    padding: 10px 18px;
+    border-radius: 20px;
+    font-size: 14px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<a class="back" href="../index.html">→ חזרה לאב-הטיפוס</a>
+<h2>וריאציה 3 — ציר זמן</h2>
+<p class="hint">הפריטים מוצגים לאורך ציר זמן אנכי, מקובצים לפי יום. פריטים נשמרים למשך 7 ימים (נתונים לדוגמה).</p>
+
+<div id="content"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const TYPE_META = {
+  link:    { label: 'קישור',  color: '#5b9dff' },
+  phone:   { label: 'טלפון',  color: '#4dd67a' },
+  email:   { label: 'אימייל', color: '#ffb84d' },
+  address: { label: 'כתובת',  color: '#c792ea' },
+  note:    { label: 'טקסט',   color: '#9aa5b1' },
+  code:    { label: 'קוד',    color: '#40c4b8' }
+};
+
+let ITEMS = [
+  { id: 1,  type: 'link',    text: 'https://he.wikipedia.org/wiki/בינה_מלאכותית', minutesAgo: 3 },
+  { id: 2,  type: 'note',    text: 'לזכור לקנות חלב, ביצים ולחם בדרך הביתה', minutesAgo: 40 },
+  { id: 3,  type: 'phone',   text: '052-123-4567', minutesAgo: 95 },
+  { id: 4,  type: 'email',   text: 'ron.mail@example.com', minutesAgo: 180 },
+  { id: 5,  type: 'code',    text: 'npm install --save-dev vite', minutesAgo: 260 },
+  { id: 6,  type: 'address', text: 'רחוב הרצל 42, תל אביב', minutesAgo: 500 },
+  { id: 7,  type: 'link',    text: 'https://github.com/ronmailx-boop/Tubeit', minutesAgo: 900 },
+  { id: 8,  type: 'note',    text: 'סיסמה זמנית: Tmp!2026Secure', minutesAgo: 1500 },
+  { id: 9,  type: 'phone',   text: '03-987-6543', minutesAgo: 2200 },
+  { id: 10, type: 'link',    text: 'https://www.ynet.co.il/news/article/latest', minutesAgo: 4300 },
+  { id: 11, type: 'email',   text: 'support@company.co.il', minutesAgo: 8600 },
+  { id: 12, type: 'note',    text: 'רעיון לפוסט: 5 טיפים לניהול זמן', minutesAgo: 9800 }
+];
+
+function timeAgoLabel(minutesAgo) {
+  if (minutesAgo < 60) return 'לפני ' + minutesAgo + ' דקות';
+  const hours = Math.floor(minutesAgo / 60);
+  if (hours < 24) return 'לפני ' + hours + ' שעות';
+  const days = Math.floor(hours / 24);
+  if (days === 1) return 'אתמול';
+  return 'לפני ' + days + ' ימים';
+}
+
+function dayGroupLabel(minutesAgo) {
+  const days = Math.floor(minutesAgo / (60 * 24));
+  if (days === 0) return 'היום';
+  if (days === 1) return 'אתמול';
+  return 'לפני ' + days + ' ימים';
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 1400);
+}
+
+function copyItem(id) {
+  const item = ITEMS.find((i) => i.id === id);
+  if (!item) return;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(item.text).then(() => showToast('הועתק ללוח'));
+  } else {
+    showToast('העתקה לא נתמכת בדפדפן זה');
+  }
+}
+
+function deleteItem(id) {
+  ITEMS = ITEMS.filter((i) => i.id !== id);
+  render();
+}
+
+function escapeHtml(s) {
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+function render() {
+  const content = document.getElementById('content');
+  if (ITEMS.length === 0) {
+    content.innerHTML = '<div style="color:#777;text-align:center;padding:40px 0;">אין פריטים בהיסטוריה</div>';
+    return;
+  }
+
+  const sorted = ITEMS.slice().sort((a, b) => a.minutesAgo - b.minutesAgo);
+  const groups = [];
+  let lastLabel = null;
+  sorted.forEach((item) => {
+    const label = dayGroupLabel(item.minutesAgo);
+    if (label !== lastLabel) {
+      groups.push({ label, items: [] });
+      lastLabel = label;
+    }
+    groups[groups.length - 1].items.push(item);
+  });
+
+  content.innerHTML = groups.map((group) => `
+    <div class="day-title">${group.label}</div>
+    <div class="timeline">
+      ${group.items.map((item) => {
+        const meta = TYPE_META[item.type];
+        return `
+          <div class="node" style="--dot-color:${meta.color}">
+            <div class="item">
+              <div class="body">
+                <div class="text">${escapeHtml(item.text)}</div>
+                <div class="meta">${meta.label} · ${timeAgoLabel(item.minutesAgo)}</div>
+              </div>
+              <div class="actions">
+                <button class="icon copy" onclick="copyItem(${item.id})">העתק</button>
+                <button class="icon" onclick="deleteItem(${item.id})">מחק</button>
+              </div>
+            </div>
+          </div>`;
+      }).join('')}
+    </div>`).join('');
+}
+
+render();
+</script>
+
+</body>
+</html>

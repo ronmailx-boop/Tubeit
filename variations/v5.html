@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>וריאציה 5 — מיקוד בחיפוש</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    background: #111;
+    color: #eee;
+    font-family: -apple-system, Roboto, Arial, sans-serif;
+    margin: 0;
+    padding: 16px;
+  }
+  a.back {
+    display: inline-block;
+    color: #999;
+    text-decoration: none;
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+  h2 { margin: 0 0 4px; }
+  p.hint {
+    color: #999;
+    font-size: 14px;
+    margin: 0 0 16px;
+  }
+  .search-row {
+    position: relative;
+    margin-bottom: 16px;
+  }
+  input[type="text"] {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid #333;
+    background: #1c1c1c;
+    color: #eee;
+    font-size: 15px;
+  }
+  input[type="text"]:focus {
+    outline: none;
+    border-color: #e33;
+  }
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 6px;
+    border-bottom: 1px solid #222;
+  }
+  .row:hover { background: #191919; }
+  .pin-btn {
+    background: none;
+    border: none;
+    color: #555;
+    font-size: 16px;
+    cursor: pointer;
+    flex-shrink: 0;
+    width: 22px;
+  }
+  .pin-btn.pinned { color: #ffb84d; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .body { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 8px; }
+  .text {
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .meta { font-size: 11px; color: #777; flex-shrink: 0; }
+  .actions { display: flex; gap: 4px; flex-shrink: 0; }
+  button.icon {
+    background: #2a2a2a;
+    border: none;
+    color: #eee;
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  button.icon:hover { background: #333; }
+  button.icon.copy { background: #e33; }
+  button.icon.copy:hover { background: #c92e2e; }
+  .section-label {
+    font-size: 12px;
+    color: #666;
+    margin: 16px 0 4px;
+  }
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2a2a2a;
+    color: #eee;
+    padding: 10px 18px;
+    border-radius: 20px;
+    font-size: 14px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .toast.show { opacity: 1; }
+  .empty { color: #777; text-align: center; padding: 40px 0; }
+</style>
+</head>
+<body>
+
+<a class="back" href="../index.html">→ חזרה לאב-הטיפוס</a>
+<h2>וריאציה 5 — מיקוד בחיפוש</h2>
+<p class="hint">שורות צפופות, חיפוש מהיר, ואפשרות "לנעוץ" פריטים חשובים. פריטים נשמרים למשך 7 ימים (נתונים לדוגמה).</p>
+
+<div class="search-row">
+  <input type="text" id="search" placeholder="חפש בהיסטוריה..." oninput="render()">
+</div>
+
+<div id="pinned-section"></div>
+<div id="list"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const TYPE_META = {
+  link:    { label: 'קישור',  color: '#5b9dff' },
+  phone:   { label: 'טלפון',  color: '#4dd67a' },
+  email:   { label: 'אימייל', color: '#ffb84d' },
+  address: { label: 'כתובת',  color: '#c792ea' },
+  note:    { label: 'טקסט',   color: '#9aa5b1' },
+  code:    { label: 'קוד',    color: '#40c4b8' }
+};
+
+let ITEMS = [
+  { id: 1,  type: 'link',    text: 'https://he.wikipedia.org/wiki/בינה_מלאכותית', minutesAgo: 3,    pinned: false },
+  { id: 2,  type: 'note',    text: 'לזכור לקנות חלב, ביצים ולחם בדרך הביתה', minutesAgo: 40,          pinned: false },
+  { id: 3,  type: 'phone',   text: '052-123-4567', minutesAgo: 95,                                   pinned: true  },
+  { id: 4,  type: 'email',   text: 'ron.mail@example.com', minutesAgo: 180,                          pinned: false },
+  { id: 5,  type: 'code',    text: 'npm install --save-dev vite', minutesAgo: 260,                   pinned: false },
+  { id: 6,  type: 'address', text: 'רחוב הרצל 42, תל אביב', minutesAgo: 500,                          pinned: true  },
+  { id: 7,  type: 'link',    text: 'https://github.com/ronmailx-boop/Tubeit', minutesAgo: 900,       pinned: false },
+  { id: 8,  type: 'note',    text: 'סיסמה זמנית: Tmp!2026Secure', minutesAgo: 1500,                  pinned: false },
+  { id: 9,  type: 'phone',   text: '03-987-6543', minutesAgo: 2200,                                  pinned: false },
+  { id: 10, type: 'link',    text: 'https://www.ynet.co.il/news/article/latest', minutesAgo: 4300,   pinned: false },
+  { id: 11, type: 'email',   text: 'support@company.co.il', minutesAgo: 8600,                        pinned: false },
+  { id: 12, type: 'note',    text: 'רעיון לפוסט: 5 טיפים לניהול זמן', minutesAgo: 9800,               pinned: false }
+];
+
+function timeAgoLabel(minutesAgo) {
+  if (minutesAgo < 60) return 'לפני ' + minutesAgo + ' דק\'';
+  const hours = Math.floor(minutesAgo / 60);
+  if (hours < 24) return 'לפני ' + hours + ' שע\'';
+  const days = Math.floor(hours / 24);
+  if (days === 1) return 'אתמול';
+  return 'לפני ' + days + ' ימים';
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 1400);
+}
+
+function copyItem(id) {
+  const item = ITEMS.find((i) => i.id === id);
+  if (!item) return;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(item.text).then(() => showToast('הועתק ללוח'));
+  } else {
+    showToast('העתקה לא נתמכת בדפדפן זה');
+  }
+}
+
+function deleteItem(id) {
+  ITEMS = ITEMS.filter((i) => i.id !== id);
+  render();
+}
+
+function togglePin(id) {
+  const item = ITEMS.find((i) => i.id === id);
+  if (item) item.pinned = !item.pinned;
+  render();
+}
+
+function escapeHtml(s) {
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+function rowHtml(item) {
+  const meta = TYPE_META[item.type];
+  return `
+    <div class="row">
+      <button class="pin-btn ${item.pinned ? 'pinned' : ''}" onclick="togglePin(${item.id})">★</button>
+      <div class="dot" style="background:${meta.color}"></div>
+      <div class="body">
+        <div class="text">${escapeHtml(item.text)}</div>
+        <div class="meta">${timeAgoLabel(item.minutesAgo)}</div>
+      </div>
+      <div class="actions">
+        <button class="icon copy" onclick="copyItem(${item.id})">העתק</button>
+        <button class="icon" onclick="deleteItem(${item.id})">מחק</button>
+      </div>
+    </div>`;
+}
+
+function render() {
+  const query = document.getElementById('search').value.trim().toLowerCase();
+  const filtered = ITEMS.filter((i) => !query || i.text.toLowerCase().includes(query));
+  const sorted = filtered.slice().sort((a, b) => a.minutesAgo - b.minutesAgo);
+
+  const pinned = sorted.filter((i) => i.pinned);
+  const rest = sorted.filter((i) => !i.pinned);
+
+  const pinnedSection = document.getElementById('pinned-section');
+  pinnedSection.innerHTML = pinned.length
+    ? '<div class="section-label">נעוצים</div>' + pinned.map(rowHtml).join('')
+    : '';
+
+  const list = document.getElementById('list');
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="empty">לא נמצאו תוצאות</div>';
+    return;
+  }
+  list.innerHTML = (pinned.length ? '<div class="section-label">הכל</div>' : '') + rest.map(rowHtml).join('');
+}
+
+render();
+</script>
+
+</body>
+</html>
