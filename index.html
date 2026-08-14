@@ -96,7 +96,7 @@
 
 <div class="fontsize-row" id="fontSizeRow">
   <label for="fontSizeSlider">גודל כתובית: <span id="fontSizeLabel">רגיל</span></label>
-  <input type="range" id="fontSizeSlider" min="-2" max="2" step="1" value="0">
+  <input type="range" id="fontSizeSlider" min="-2" max="5" step="1" value="0">
 </div>
 
 <div class="wrap" id="playerWrap">
@@ -127,11 +127,8 @@ let ytPlayer = null;
 let apiReady = false;
 let pendingVideoId = null;
 let captionEnforceInterval = null;
-let noCaptionsCheckCount = 0;
-let captionFontSize = 0; // -2..2, matches #fontSizeSlider
+let captionFontSize = 0; // -2..5, matches #fontSizeSlider
 const CAPTION_ENFORCE_INTERVAL_MS = 4000;
-const NO_CAPTIONS_THRESHOLD = 3;
-const NO_CAPTIONS_MESSAGE = 'לסרטון זה אין כתוביות זמינות ביוטיוב, ולכן לא ניתן להציג תרגום.';
 
 function loadVideo() {
   const input = document.getElementById('urlInput').value;
@@ -158,7 +155,6 @@ function loadVideo() {
 }
 
 function requestVideo(id) {
-  noCaptionsCheckCount = 0;
   if (ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
     ytPlayer.loadVideoById(id);
     applyHebrewCaptions(ytPlayer);
@@ -206,29 +202,7 @@ function startCaptionEnforcement(player) {
   if (captionEnforceInterval) clearInterval(captionEnforceInterval);
   captionEnforceInterval = setInterval(function () {
     applyHebrewCaptions(player);
-    checkCaptionAvailability(player);
   }, CAPTION_ENFORCE_INTERVAL_MS);
-}
-
-function checkCaptionAvailability(player) {
-  const status = document.getElementById('status');
-  let tracklist;
-  try { tracklist = player.getOption('captions', 'tracklist'); } catch (e) { tracklist = null; }
-
-  if (tracklist && Object.keys(tracklist).length > 0) {
-    noCaptionsCheckCount = 0;
-    if (status.textContent === NO_CAPTIONS_MESSAGE) {
-      status.textContent = '';
-      status.className = 'status';
-    }
-    return;
-  }
-
-  noCaptionsCheckCount++;
-  if (noCaptionsCheckCount === NO_CAPTIONS_THRESHOLD) {
-    status.textContent = NO_CAPTIONS_MESSAGE;
-    status.className = 'status error';
-  }
 }
 
 function onYouTubeIframeAPIReady() {
@@ -245,7 +219,10 @@ document.getElementById('urlInput').addEventListener('keydown', function(e) {
   if (e.key === 'Enter') loadVideo();
 });
 
-const FONT_SIZE_LABELS = { '-2': 'קטן מאוד', '-1': 'קטן', '0': 'רגיל', '1': 'גדול', '2': 'גדול מאוד' };
+const FONT_SIZE_LABELS = {
+  '-2': 'קטן מאוד', '-1': 'קטן', '0': 'רגיל', '1': 'גדול', '2': 'גדול מאוד',
+  '3': 'ענק', '4': 'ענק מאוד', '5': 'מקסימלי'
+};
 const fontSizeSlider = document.getElementById('fontSizeSlider');
 const fontSizeLabel = document.getElementById('fontSizeLabel');
 fontSizeSlider.addEventListener('input', function () {
