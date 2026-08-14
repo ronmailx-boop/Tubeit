@@ -3,6 +3,7 @@ package com.tubeit.cliphistory
 import android.content.ClipboardManager
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
@@ -29,19 +30,41 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Android only allows reading the clipboard while this app has foreground
-        // focus, so this is the most automatic capture point available -- there is
-        // no way to listen for copies made elsewhere while this app isn't in front.
-        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        val clip = clipboard.primaryClip
-        if (clip != null && clip.itemCount > 0) {
-            val text = clip.getItemAt(0).coerceToText(this)?.toString().orEmpty()
-            if (text.isNotBlank()) {
-                refresh(ClipStore.addIfNew(this, text))
-                return
+        checkClipboard()
+    }
+
+    // Android only allows reading the clipboard once this window actually has
+    // input focus -- onResume() can fire slightly before that (e.g. right after
+    // launch, or coming back from the recents screen / notification shade), and
+    // on some OEM builds (Samsung One UI included) a read attempted too early
+    // silently returns null instead of the real content. onWindowFocusChanged()
+    // firing with hasFocus=true is the reliable signal that a read will succeed,
+    // so re-check there as well -- this is the only automatic capture point
+    // Android allows without a custom keyboard/accessibility service.
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) checkClipboard()
+    }
+
+    private fun checkClipboard() {
+        val text = try {
+            val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            val clip = clipboard.primaryClip
+            if (clip != null && clip.itemCount > 0) {
+                clip.getItemAt(0).coerceToText(this)?.toString().orEmpty()
+            } else {
+                ""
             }
+        } catch (e: SecurityException) {
+            Log.w("Tubeit", "Clipboard read denied", e)
+            ""
         }
-        refresh(ClipStore.purgeOld(this))
+
+        if (text.isNotBlank()) {
+            refresh(ClipStore.addIfNew(this, text))
+        } else {
+            refresh(ClipStore.purgeOld(this))
+        }
     }
 
     private fun refresh(items: MutableList<ClipItem>) {
