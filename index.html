@@ -104,7 +104,10 @@ let ytPlayer = null;
 let apiReady = false;
 let pendingVideoId = null;
 let captionEnforceInterval = null;
+let noCaptionsCheckCount = 0;
 const CAPTION_ENFORCE_INTERVAL_MS = 4000;
+const NO_CAPTIONS_THRESHOLD = 3;
+const NO_CAPTIONS_MESSAGE = 'לסרטון זה אין כתוביות זמינות ביוטיוב, ולכן לא ניתן להציג תרגום.';
 
 function loadVideo() {
   const input = document.getElementById('urlInput').value;
@@ -131,6 +134,7 @@ function loadVideo() {
 }
 
 function requestVideo(id) {
+  noCaptionsCheckCount = 0;
   if (ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
     ytPlayer.loadVideoById(id);
     applyHebrewCaptions(ytPlayer);
@@ -147,7 +151,8 @@ function requestVideo(id) {
     },
     events: {
       onReady: onPlayerReady,
-      onStateChange: onPlayerStateChange
+      onStateChange: onPlayerStateChange,
+      onApiChange: onPlayerApiChange
     }
   });
 }
@@ -168,11 +173,37 @@ function onPlayerStateChange(event) {
   applyHebrewCaptions(event.target);
 }
 
+function onPlayerApiChange(event) {
+  applyHebrewCaptions(event.target);
+}
+
 function startCaptionEnforcement(player) {
   if (captionEnforceInterval) clearInterval(captionEnforceInterval);
   captionEnforceInterval = setInterval(function () {
     applyHebrewCaptions(player);
+    checkCaptionAvailability(player);
   }, CAPTION_ENFORCE_INTERVAL_MS);
+}
+
+function checkCaptionAvailability(player) {
+  const status = document.getElementById('status');
+  let tracklist;
+  try { tracklist = player.getOption('captions', 'tracklist'); } catch (e) { tracklist = null; }
+
+  if (tracklist && Object.keys(tracklist).length > 0) {
+    noCaptionsCheckCount = 0;
+    if (status.textContent === NO_CAPTIONS_MESSAGE) {
+      status.textContent = '';
+      status.className = 'status';
+    }
+    return;
+  }
+
+  noCaptionsCheckCount++;
+  if (noCaptionsCheckCount === NO_CAPTIONS_THRESHOLD) {
+    status.textContent = NO_CAPTIONS_MESSAGE;
+    status.className = 'status error';
+  }
 }
 
 function onYouTubeIframeAPIReady() {
