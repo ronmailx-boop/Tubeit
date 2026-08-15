@@ -3,7 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tubeit - הורדת האפליקציה</title>
+<title>Tubeit - היסטוריית קליפבורד</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="favicon.ico">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="theme-color" content="#111111">
 <style>
   * { box-sizing: border-box; }
   body {
@@ -11,18 +16,42 @@
     color: #eee;
     font-family: -apple-system, Roboto, Arial, sans-serif;
     margin: 0;
-    padding: 24px 16px;
+    padding: 32px 16px;
     max-width: 480px;
     margin-inline: auto;
     text-align: center;
   }
-  h1 { margin: 12px 0 4px; }
-  p.hint {
+  img.logo {
+    width: 96px;
+    height: 96px;
+    border-radius: 22px;
+    margin-bottom: 12px;
+  }
+  h1 { margin: 0 0 4px; }
+  p.tagline {
     color: #999;
     font-size: 14px;
-    line-height: 1.6;
-    margin: 0 0 24px;
+    margin: 0 0 28px;
   }
+  ul.features {
+    text-align: right;
+    list-style: none;
+    padding: 0;
+    margin: 0 0 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  ul.features li {
+    background: #1c1c1c;
+    border: 1px solid #2c2c2c;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 14px;
+    color: #ccc;
+    line-height: 1.5;
+  }
+  ul.features b { color: #eee; }
   a.download-btn {
     display: inline-block;
     background: #e33;
@@ -30,9 +59,9 @@
     text-decoration: none;
     font-size: 17px;
     font-weight: bold;
-    padding: 14px 28px;
+    padding: 14px 32px;
     border-radius: 10px;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
   }
   .note {
     text-align: right;
@@ -56,23 +85,25 @@
 </head>
 <body>
 
+<img class="logo" src="icons/icon-192.png" alt="Tubeit">
 <h1>Tubeit</h1>
-<p class="hint">היסטוריית קליפבורד — אפליקציית אנדרואיד אמיתית, אופליין לגמרי.<br>ההורדה אמורה להתחיל אוטומטית.</p>
+<p class="tagline">היסטוריית קליפבורד — אפליקציית אנדרואיד אמיתית, אופליין לגמרי</p>
 
-<a class="download-btn" href="download/tubeit.apk" id="downloadLink">הורד את הקובץ (APK)</a>
+<ul class="features">
+  <li>בודקת מה בלוח בכל פתיחה, ומזהה אוטומטית <b>קישורים / טלפונים / אימיילים / טקסט</b></li>
+  <li>היסטוריה נשמרת <b>7 ימים</b> ונמחקת אוטומטית</li>
+  <li><b>אופליין לגמרי</b> — בלי הרשאת אינטרנט, שום דבר לא נשלח החוצה</li>
+  <li>העתקה חזרה ללוח וניהול היסטוריה בלחיצה, כולל פתיחת כרטיסייה בגודל מלא וקישורים לחיצים</li>
+</ul>
+
+<a class="download-btn" href="https://github.com/ronmailx-boop/Tubeit/releases/latest/download/tubeit.apk">הורדת האפליקציה (APK)</a>
 
 <div class="note">
   <b>שימו לב:</b> זו לא אפליקציה מחנות Google Play, לכן בפעם הראשונה כרום יבקש לאשר "התקנת אפליקציות ממקורות לא ידועים". צריך לאשר את זה כדי להתקין.<br><br>
-  האפליקציה עצמה פועלת <b>לגמרי אופליין</b> — אין לה הרשאת אינטרנט בכלל.
+  <b>מתאים ל:</b> Android 8.0 ומעלה (מותאם ל-Android 16).
 </div>
 
 <a class="variations-link" href="variations/v1.html">הצצה לוריאציות העיצוב המקוריות</a>
-
-<script>
-  // Auto-trigger the download; the visible button above is the fallback
-  // in case the browser blocks a programmatic navigation on load.
-  window.location.href = 'download/tubeit.apk';
-</script>
 
 </body>
 </html>

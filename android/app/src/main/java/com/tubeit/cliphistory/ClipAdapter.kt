@@ -3,11 +3,18 @@ package com.tubeit.cliphistory
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.method.LinkMovementMethod
+import android.text.style.UnderlineSpan
+import android.text.util.Linkify
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.tubeit.cliphistory.databinding.DialogClipDetailBinding
 import com.tubeit.cliphistory.databinding.ItemClipCardBinding
 
 class ClipAdapter(
@@ -33,20 +40,54 @@ class ClipAdapter(
         binding.typeLabel.text = item.type.label
         binding.typeLabel.setTextColor(color)
         binding.accentStrip.setBackgroundColor(color)
-        binding.itemText.text = item.text
         binding.itemMeta.text = timeAgoLabel(item.timestampMillis)
 
-        binding.copyButton.setOnClickListener {
-            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-            clipboard.setPrimaryClip(ClipData.newPlainText("tubeit", item.text))
-            Toast.makeText(context, context.getString(R.string.copied_toast), Toast.LENGTH_SHORT).show()
+        if (item.type == ClipType.LINK) {
+            val underlined = SpannableString(item.text)
+            underlined.setSpan(UnderlineSpan(), 0, item.text.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            binding.itemText.text = underlined
+            binding.itemText.setTextColor(color)
+        } else {
+            binding.itemText.text = item.text
+            binding.itemText.setTextColor(ContextCompat.getColor(context, R.color.text_primary))
         }
+
+        binding.copyButton.setOnClickListener { copyToClipboard(context, item.text) }
         binding.deleteButton.setOnClickListener { onDelete(item) }
+        holder.itemView.setOnClickListener { showDetailDialog(context, item) }
     }
 
     fun updateItems(newItems: MutableList<ClipItem>) {
         items = newItems
         notifyDataSetChanged()
+    }
+
+    private fun copyToClipboard(context: Context, text: String) {
+        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        clipboard.setPrimaryClip(ClipData.newPlainText("tubeit", text))
+        Toast.makeText(context, context.getString(R.string.copied_toast), Toast.LENGTH_SHORT).show()
+    }
+
+    private fun showDetailDialog(context: Context, item: ClipItem) {
+        val binding = DialogClipDetailBinding.inflate(LayoutInflater.from(context))
+        val color = typeColor(context, item.type)
+
+        binding.dialogTypeLabel.text = item.type.label
+        binding.dialogTypeLabel.setTextColor(color)
+        binding.dialogText.text = item.text
+        binding.dialogMeta.text = timeAgoLabel(item.timestampMillis)
+
+        if (item.type == ClipType.LINK) {
+            Linkify.addLinks(binding.dialogText, Linkify.WEB_URLS)
+            binding.dialogText.movementMethod = LinkMovementMethod.getInstance()
+        }
+
+        MaterialAlertDialogBuilder(context)
+            .setView(binding.root)
+            .setPositiveButton(R.string.copy) { _, _ -> copyToClipboard(context, item.text) }
+            .setNeutralButton(R.string.delete) { _, _ -> onDelete(item) }
+            .setNegativeButton(R.string.close, null)
+            .show()
     }
 
     private fun typeColor(context: Context, type: ClipType): Int {

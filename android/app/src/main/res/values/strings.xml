@@ -4,5 +4,8 @@
     <string name="empty_state">אין פריטים בהיסטוריה עדיין. העתיקו משהו ופתחו את האפליקציה שוב.</string>
     <string name="copy">העתק</string>
     <string name="delete">מחק</string>
+    <string name="delete_symbol">✕</string>
     <string name="copied_toast">הועתק ללוח</string>
+    <string name="close">סגור</string>
+    <string name="open_link">פתח קישור</string>
 </resources>

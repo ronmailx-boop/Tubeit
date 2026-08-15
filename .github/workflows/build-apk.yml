@@ -39,13 +39,12 @@ jobs:
         working-directory: android
         run: ./gradlew assembleDebug --stacktrace
 
-      - name: Copy APK to download folder
-        run: |
-          mkdir -p download
-          cp android/app/build/outputs/apk/debug/app-debug.apk download/tubeit.apk
+      - name: Rename APK for release
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk tubeit.apk
 
-      - name: Commit built APK
-        uses: stefanzweifel/git-auto-commit-action@v5
+      - name: Publish to the "latest" GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          commit_message: 'Update built APK [skip ci]'
-          file_pattern: 'download/tubeit.apk'
+          tag_name: latest
+          name: Tubeit (latest build)
+          files: tubeit.apk
