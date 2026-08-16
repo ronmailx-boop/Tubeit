@@ -42,7 +42,7 @@ class ClipAdapter(
         binding.accentStrip.setBackgroundColor(color)
         binding.itemMeta.text = timeAgoLabel(item.timestampMillis)
 
-        if (item.type == ClipType.LINK) {
+        if (item.type == ClipType.LINK || item.type == ClipType.PHONE) {
             val underlined = SpannableString(item.text)
             underlined.setSpan(UnderlineSpan(), 0, item.text.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
             binding.itemText.text = underlined
@@ -77,9 +77,19 @@ class ClipAdapter(
         binding.dialogText.text = item.text
         binding.dialogMeta.text = timeAgoLabel(item.timestampMillis)
 
-        if (item.type == ClipType.LINK) {
-            Linkify.addLinks(binding.dialogText, Linkify.WEB_URLS)
-            binding.dialogText.movementMethod = LinkMovementMethod.getInstance()
+        when (item.type) {
+            ClipType.LINK -> {
+                Linkify.addLinks(binding.dialogText, Linkify.WEB_URLS)
+                binding.dialogText.movementMethod = LinkMovementMethod.getInstance()
+            }
+            ClipType.PHONE -> {
+                // ACTION_DIAL opens the default dialer pre-filled with the number
+                // without placing the call itself, so no CALL_PHONE permission
+                // is needed -- the user still has to press call themselves.
+                Linkify.addLinks(binding.dialogText, Linkify.PHONE_NUMBERS)
+                binding.dialogText.movementMethod = LinkMovementMethod.getInstance()
+            }
+            else -> {}
         }
 
         MaterialAlertDialogBuilder(context)
