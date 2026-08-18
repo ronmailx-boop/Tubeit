@@ -3,6 +3,7 @@ package com.tubeit.cliphistory
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.method.LinkMovementMethod
@@ -76,6 +77,7 @@ class ClipAdapter(
         binding.dialogTypeLabel.setTextColor(color)
         binding.dialogText.text = item.text
         binding.dialogMeta.text = timeAgoLabel(item.timestampMillis)
+        binding.shareButton.setOnClickListener { shareText(context, item.text) }
 
         when (item.type) {
             ClipType.LINK -> {
@@ -105,6 +107,14 @@ class ClipAdapter(
             .setNeutralButton(R.string.delete) { _, _ -> onDelete(item) }
             .setNegativeButton(R.string.close, null)
             .show()
+    }
+
+    private fun shareText(context: Context, text: String) {
+        val sendIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, text)
+        }
+        context.startActivity(Intent.createChooser(sendIntent, context.getString(R.string.share)))
     }
 
     private fun typeColor(context: Context, type: ClipType): Int {
