@@ -96,14 +96,28 @@
   <li>העתקה חזרה ללוח וניהול היסטוריה בלחיצה, כולל פתיחת כרטיסייה בגודל מלא וקישורים לחיצים</li>
 </ul>
 
-<a class="download-btn" href="https://github.com/ronmailx-boop/Tubeit/releases/latest/download/tubeit.apk">הורדת האפליקציה (APK)</a>
+<a class="download-btn" id="actionBtn" href="https://github.com/ronmailx-boop/Tubeit/releases/latest/download/tubeit.apk">פתיחה / הורדה של Tubeit</a>
 
 <div class="note">
-  <b>שימו לב:</b> זו לא אפליקציה מחנות Google Play, לכן בפעם הראשונה כרום יבקש לאשר "התקנת אפליקציות ממקורות לא ידועים". צריך לאשר את זה כדי להתקין.<br><br>
+  <b>שימו לב:</b> אם Tubeit כבר מותקן אצלכם, הכפתור יפתח אותו ישירות. אם לא — הוא יתחיל הורדה. זו לא אפליקציה מחנות Google Play, לכן בפעם הראשונה כרום יבקש לאשר "התקנת אפליקציות ממקורות לא ידועים". צריך לאשר את זה כדי להתקין.<br><br>
   <b>מתאים ל:</b> Android 8.0 ומעלה (מותאם ל-Android 16).
 </div>
 
 <a class="variations-link" href="variations/v1.html">הצצה לוריאציות העיצוב המקוריות</a>
+
+<script>
+  (function () {
+    var btn = document.getElementById('actionBtn');
+    var downloadUrl = btn.href;
+    var isAndroid = /Android/i.test(navigator.userAgent);
+    if (!isAndroid) return; // non-Android: keep the plain download link
+    btn.addEventListener('click', function (e) {
+      e.preventDefault();
+      location.href = 'intent://open#Intent;scheme=tubeit;package=com.tubeit.cliphistory;S.browser_fallback_url=' +
+        encodeURIComponent(downloadUrl) + ';end;';
+    });
+  })();
+</script>
 
 </body>
 </html>
