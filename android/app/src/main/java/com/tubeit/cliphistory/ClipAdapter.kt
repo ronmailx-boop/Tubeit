@@ -42,7 +42,7 @@ class ClipAdapter(
         binding.accentStrip.setBackgroundColor(color)
         binding.itemMeta.text = timeAgoLabel(item.timestampMillis)
 
-        if (item.type == ClipType.LINK || item.type == ClipType.PHONE) {
+        if (item.type == ClipType.LINK || item.type == ClipType.PHONE || item.type == ClipType.EMAIL) {
             val underlined = SpannableString(item.text)
             underlined.setSpan(UnderlineSpan(), 0, item.text.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
             binding.itemText.text = underlined
@@ -87,6 +87,13 @@ class ClipAdapter(
                 // without placing the call itself, so no CALL_PHONE permission
                 // is needed -- the user still has to press call themselves.
                 Linkify.addLinks(binding.dialogText, Linkify.PHONE_NUMBERS)
+                binding.dialogText.movementMethod = LinkMovementMethod.getInstance()
+            }
+            ClipType.EMAIL -> {
+                // Turns the address into a mailto: link, which opens the
+                // default mail app's compose screen with this address
+                // already filled in as the recipient.
+                Linkify.addLinks(binding.dialogText, Linkify.EMAIL_ADDRESSES)
                 binding.dialogText.movementMethod = LinkMovementMethod.getInstance()
             }
             else -> {}
