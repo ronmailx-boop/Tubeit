@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="quick_capture"
+        android:enabled="true"
+        android:icon="@drawable/ic_tile_capture"
+        android:shortcutShortLabel="@string/quick_capture_tile"
+        android:shortcutLongLabel="@string/quick_capture_tile">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.tubeit.cliphistory"
+            android:targetClass="com.tubeit.cliphistory.CaptureActivity" />
+    </shortcut>
+</shortcuts>

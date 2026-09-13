@@ -26,7 +26,35 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="tubeit" android:host="open" />
             </intent-filter>
+
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
         </activity>
+
+        <!-- No-UI entry point for the quick-capture tile and shortcut: grabs a
+             moment of window focus (the only time Android allows a clipboard
+             read) to store the current clipboard, then closes itself. -->
+        <activity
+            android:name=".CaptureActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.NoDisplay"
+            android:excludeFromRecents="true"
+            android:noHistory="true" />
+
+        <!-- Quick Settings tile: tap to capture the clipboard without opening
+             the full app, since the app can't observe clipboard changes while
+             it's not focused (Android's background-clipboard restriction). -->
+        <service
+            android:name=".QuickCaptureTileService"
+            android:icon="@drawable/ic_tile_capture"
+            android:label="@string/quick_capture_tile"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>
