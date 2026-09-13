@@ -1,9 +1,6 @@
 package com.tubeit.cliphistory
 
-import android.content.ClipboardManager
-import android.content.Context
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
@@ -47,24 +44,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkClipboard() {
-        val text = try {
-            val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-            val clip = clipboard.primaryClip
-            if (clip != null && clip.itemCount > 0) {
-                clip.getItemAt(0).coerceToText(this)?.toString().orEmpty()
-            } else {
-                ""
-            }
-        } catch (e: SecurityException) {
-            Log.w("Tubeit", "Clipboard read denied", e)
-            ""
-        }
-
-        if (text.isNotBlank()) {
-            refresh(ClipStore.addIfNew(this, text))
-        } else {
-            refresh(ClipStore.purgeOld(this))
-        }
+        ClipboardCapture.capture(this)
+        refresh(ClipStore.loadAll(this))
     }
 
     private fun refresh(items: MutableList<ClipItem>) {
